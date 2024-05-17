@@ -22,3 +22,9 @@ smtp_mail_receiver_name="RECEIVER Name" # name address which will shown in the r
 mail_title_content="新消息来自" # New SMS From
 mail_body_content=""
 mail_end_content="消息接收时间：" # SMS was received at:
+
+webserver_enable=False
+webserver_ip='0.0.0.0'
+webserver_port=14514
+webserver_login_username="sms780e"
+webserver_login_password="sms780e"
