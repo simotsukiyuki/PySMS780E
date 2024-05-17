@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>cd70e0a6-ac35-4be1-9881-904a2b242b02</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>PySMS780E.py</StartupFile>
+    <StartupFile>main.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -21,8 +21,11 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="PySMS780E.py" />
+    <Compile Include="Config.py" />
+    <Compile Include="SendMail.py" />
+    <Compile Include="main.py" />
     <Compile Include="Storage.py" />
+    <Compile Include="TestMail.py" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
