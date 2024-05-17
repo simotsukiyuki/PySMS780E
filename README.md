@@ -5,6 +5,8 @@
 
 *这个项目还处于测试阶段，请勿用于生产环境*
 
+*该程序在Linux/MacOS系统以及树莓派等各种ARM/RISCV开发板上的运行效果尚不明确，请自行测试。*
+
 本项目需要配合合宙Air780E LTE Cat.1开发板以及专用固件使用。
 专用固件项目：https://github.com/simotsukiyuki/sms_forwarding_uart
 
@@ -17,6 +19,10 @@
 # 查看端口
 
 刷入固件后建议重启（软/硬件均可）开发板。在开发板的Log里可以看到一个叫做**用户虚拟端口COMx**（x代表具体数字）的端口号，记下来。
+
+# 安装依赖项目
+
+> pip install zmail==0.2.8 pyserial==3.5
 
 # 配置PySMS780E
 
