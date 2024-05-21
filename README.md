@@ -25,7 +25,9 @@
 # 安装依赖项目
 
 > python3 -m venv [YOUR_VENV_NAME]
+> 
 > source ./[YOUR_VENV_NAME]/bin/active
+> 
 > pip3 install zmail==0.2.8 pyserial==3.5
 
 # 配置PySMS780E
@@ -37,4 +39,5 @@
 # 启动软件
 
 > source ./[YOUR_VENV_NAME]/bin/active
+> 
 > python main.py
