@@ -3,7 +3,7 @@
 
 **重要提示**
 
-*这个项目还处于测试阶段，请勿用于生产环境*
+*这个项目还处于测试阶段，请勿用于生产环境，后果自负*
 
 *该程序在Linux/MacOS系统以及树莓派等各种ARM/RISCV开发板上的运行效果尚不明确，请自行测试。*
 
@@ -20,9 +20,13 @@
 
 刷入固件后建议重启（软/硬件均可）开发板。在开发板的Log里可以看到一个叫做**用户虚拟端口COMx**（x代表具体数字）的端口号，记下来。
 
+> Linux系统下大概率是/dev/ttyACM3
+
 # 安装依赖项目
 
-> pip install zmail==0.2.8 pyserial==3.5
+> python3 -m venv [YOUR_VENV_NAME]
+> source ./[YOUR_VENV_NAME]/bin/active
+> pip3 install zmail==0.2.8 pyserial==3.5
 
 # 配置PySMS780E
 
@@ -32,4 +36,5 @@
 
 # 启动软件
 
+> source ./[YOUR_VENV_NAME]/bin/active
 > python main.py
