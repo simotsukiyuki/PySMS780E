@@ -3,6 +3,7 @@
 
 from datetime import datetime
 import json
+from time import sleep
 import serial
 import os
 from serial.serialutil import EIGHTBITS, PARITY_NONE
@@ -51,9 +52,12 @@ def SMS780E():
 
     while True:
         try:
-            ser_in=ser.read(ser.in_waiting)# 进程阻塞，等待数据传入
-            if ser_in:
-                SMSReceivedProcessing(ser_in.decode("utf-8"))# 数据传入以后将其转换为UTF-8格式，交给短信处理程序处理
+            if ser.in_waiting:# 如果有数据传入（防止pyserial.read方法阻塞进程导致CPU占用过高）
+                ser_in=ser.read(ser.in_waiting)# 读取指定长度的数据
+                if ser_in:
+                    SMSReceivedProcessing(ser_in.decode("utf-8"))# 数据传入以后将其转换为UTF-8格式，交给短信处理程序处理
+            
+            sleep(0.01)# 如果没有数据传入则等待0.01秒等待数据传入
             
         except KeyboardInterrupt:# Ctrl+C 退出
             ser.close()
