@@ -1,11 +1,11 @@
 # PySMS780E
-## 【测试项目】基于Python的跨平台版本LuatOS Air780E短信接收客户端
+## 【测试项目】基于Python的跨平台LuatOS Air780E短信接收客户端
 
 **重要提示**
 
-*这个项目还处于测试阶段，请勿用于生产环境，后果自负*
+*这个项目还处于测试阶段，**请勿用于生产环境，后果自负***
 
-*该程序在Linux/MacOS系统以及树莓派等各种ARM/RISCV开发板上的运行效果尚不明确，请自行测试。*
+*该程序在Linux/MacOS系统、以及树莓派等各种ARM/RISCV开发板上的运行效果及稳定性尚不明确，请自行测试。*
 
 本项目需要配合合宙Air780E LTE Cat.1开发板以及专用固件使用。
 专用固件项目：https://github.com/simotsukiyuki/sms_forwarding_uart
@@ -20,9 +20,11 @@
 
 刷入固件后建议重启（软/硬件均可）开发板。在开发板的Log里可以看到一个叫做**用户虚拟端口COMx**（x代表具体数字）的端口号，记下来。
 
-> Linux系统下大概率是/dev/ttyACM3
+> Linux系统下780E系列模块大概率是/dev/ttyACM3。如果不是，请以实际测试为准
 
 # 安装依赖项目
+
+建议**不要使用root**用户！
 
 > python3 -m venv [YOUR_VENV_NAME]
 > 
@@ -30,13 +32,27 @@
 > 
 > pip3 install zmail==0.2.8 pyserial==3.5
 
-# 配置PySMS780E
+# 下载及配置PySMS780E
 
-当前版本需要打开Config.py文件修改源代码，根据里面的信息进行配置端口及邮箱转发。
+> git clone -b main https://github.com/simotsukiyuki/PySMS780E.git
+>
+> cd ./PySMS780E
+>
+> nano Config.py
 
-具体的配置文件说明正在补充。
+NOTE: 当前版本需要打开Config.py文件修改源代码，你可以根据里面的信息进行配置端口及邮箱转发。
+
+具体的配置文件说明已经补充。
+
+# 测试邮箱
+
+> source ./[YOUR_VENV_NAME]/bin/active
+> 
+> python TestMail.py
 
 # 启动软件
+
+建议使用tmux等持久化工具以避免断开SSH时导致软件退出。
 
 > source ./[YOUR_VENV_NAME]/bin/active
 > 
