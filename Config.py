@@ -23,6 +23,10 @@ mail_title_content="新消息来自" # New SMS From / （用于多语言翻译�
 mail_body_content=""
 mail_end_content="消息接收时间：" # SMS was received at: / （用于多语言翻译）邮件结尾
 
+smscmd_enable=False # SMS Command Enable / 是否激活短信指令功能
+smscmd_admin_phone="12345678901" # Administrator's Phone Number / 允许接受短信指令的管理号码
+smscmd_command_sendsms="sms780e_sendto" # Command title of sending sms / 发送短信的指令
+smscmd_command_exit="sms780e_exit" # Command title of stop server / 退出的指令
 '''
 Hint: The default COM_PORT of Air780E couldn't view in Windows, but you can check it with Luatools.
 The default COM_PORT of Air780E in Linux is usually /dev/ttyACM3

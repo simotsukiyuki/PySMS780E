@@ -12,19 +12,27 @@ from SendMail import SendMail
 from Storage import Storage
 import Config
 
-# 接收到短信时的处理程序
-def SMSReceivedProcessing(smsrawdata):
+# 将SMS780E的伪JSON转换为真JSON
+# 参考资料：https://github.com/simotsukiyuki/sms_forwarding_uart
+# 输入：smsrawdata: SMS780E的伪JSON, string
+# 输出：真正的短信JSON
+def SMSRawDataToRealJson(smsrawdata):
     smsrawdata=smsrawdata.replace("@$","{\"")
     smsrawdata=smsrawdata.replace("$@","\"}")
     smsrawdata=smsrawdata.replace("$","\"")
-    # 替换占位符为Json格式
-    
+    # 替换占位符为Json格式    
+    return smsrawdata
+
+# 接收到短信时的处理程序
+# 只能接受正确格式的JSON，不支持SMS780E直接输出的伪JSON
+# 输入：smsrawdata: 处理后的JSON, string
+def SMSReceivedProcessing(smsrawdata):
     recvtime=str(datetime.now()) # 接收短信的时间=现在
     sender="";# 发件人
     smscontent="";# 短信内容
     
     try:        #解析json
-        msg = json.loads(smsrawdata)
+        msg = json.loads(smsrawdata) # JSON->msg对象
         sender=msg["from"]
         smscontent=msg["data"]
     except:# 解析json失败时，直接将JSON作为短信内容输出，避免丢短信
@@ -33,6 +41,21 @@ def SMSReceivedProcessing(smsrawdata):
     finally:
         Storage.AddNewMsg(sender,smscontent,recvtime)# 存储短信到SQLITE3
         SendMail.SendNewMail(sender,smscontent,recvtime)# 发邮件的处理
+
+# 短信指令处理程序
+def SMSCmdProcessing(smsrawdata):
+    if Config.smscmd_enable == False:# 如果短信指令功能未开启则跳过
+        return
+    try:
+        msg = json.loads(smsrawdata) # JSON->msg对象
+        if msg["from"] in Config.smscmd_admin_phone : # 如果短信的发件人是管理员
+            pass# To Be Continue
+        else:
+            return
+    except Exception as e:
+        print(str(datetime.now())+" > SMS Command Exec Failed! ",e)
+    finally:
+        return
 
 # 主进程
 def SMS780E():
@@ -55,7 +78,8 @@ def SMS780E():
             if ser.in_waiting:# 如果有数据传入（防止pyserial.read方法阻塞进程导致CPU占用过高）
                 ser_in=ser.read(ser.in_waiting)# 读取指定长度的数据
                 if ser_in:
-                    SMSReceivedProcessing(ser_in.decode("utf-8"))# 数据传入以后将其转换为UTF-8格式，交给短信处理程序处理
+                    ser_in_utf8=SMSRawDataToRealJson(ser_in.decode("utf-8"))# 数据传入以后将其转换为UTF-8格式
+                    SMSReceivedProcessing(ser_in_utf8)# 交给短信处理程序处理
             
             sleep(0.01)# 如果没有数据传入则等待0.01秒等待数据传入
             
