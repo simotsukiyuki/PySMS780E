@@ -27,9 +27,11 @@ def SMSRawDataToRealJson(smsrawdata):
 # 输入：sendto：信息收件人号码 smscontent：信息内容 serialObject：pySerial的用户串口对象（必须！）
 def SendSms(sendto,smscontent,serialObject):
     if datetime.now()>=GlobalData.nextSmsSendAccept:# 如果已经过了冷却时间
+        print(str(datetime.now())+' > SMS is sending...')
         jsonData=str('{"type":"sms","to":"'+ sendto +'","content":"'+ smscontent +'"}')# 拼接json，具体参考https://github.com/simotsukiyuki/sms_forwarding_uart
         serialObject.write(jsonData.encode())# 将json字符串转换为pySerial能接收的bytes并且发送到用户串口
         GlobalData.nextSmsSendAccept=datetime.now()+timedelta(seconds=Config.smscmd_cmd_nextsms_countdown)# 刷新冷却时间
+        print(str(datetime.now())+' > SMS send completed. Next SMS could be send at: ', GlobalData.nextSmsSendAccept)
     else:# 如果还在冷却时间则跳过
         print(str(datetime.now())+' > SMS not send dual cold-down, until time: ', GlobalData.nextSmsSendAccept)
     return
@@ -68,19 +70,23 @@ def SMSCmdProcessing(smsrawdata,serialObject):
                 if cmd in Config.smscmd_command_sendsms:#发短信
                     sendto=str(cmds[1])# 收件人
                     content=str(cmds[2])# 短信内容
-
                     SendSms(sendto,content,serialObject)
+
+                    return True
                 elif cmd in Config.smscmd_command_exit:#退出
                     print(str(datetime.now())+' > Executing: ', cmd)
                     serialObject.close()
 
-                return True
+                    return True
+                else:
+                    print(str(datetime.now())+' > Unknown Command: ', cmd)
+                    
+                    return False;
             else:# 不是管理员则忽略此短信
+                print(str(datetime.now())+' > NOT SMS Command or Not Administrator. Skip.')
                 return False
         except Exception as e:
             print(str(datetime.now())+" > SMS Command Exec Failed! ",e)
-
-        finally:
             return False
 
 # 主进程
