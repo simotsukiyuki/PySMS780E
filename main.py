@@ -10,7 +10,7 @@ from serial.serialutil import EIGHTBITS, PARITY_NONE
 from multiprocessing import Process
 from SendMail import SendMail
 from Storage import Storage
-import Config
+import Config, GlobalData
 
 # 将SMS780E的伪JSON转换为真JSON
 # 参考资料：https://github.com/simotsukiyuki/sms_forwarding_uart
@@ -24,14 +24,18 @@ def SMSRawDataToRealJson(smsrawdata):
     return smsrawdata
 
 def SendSms(sendto,smscontent,serialObject):
-    global nextSmsSendAccept
-    if datetime.now()>=nextSmsSendAccept:
-        jsonData='{"type":"sms","to":"',sendto,'","content":"',smscontent,'"}'
-        serialObject.write(jsonData)
-        nextSmsSendAccept=datetime.now()+timedelta(seconds=Config.smscmd_cmd_nextsms_countdown)
+    if datetime.now()>=GlobalData.nextSmsSendAccept:
+        jsonData=str('{"type":"sms","to":"'+ sendto +'","content":"'+ smscontent +'"}')
+        serialObject.write(jsonData.encode())
+        GlobalData.nextSmsSendAccept=datetime.now()+timedelta(seconds=Config.smscmd_cmd_nextsms_countdown)
     else:
-        print(str(datetime.now())+' > SMS not send dual cold-down, until time: ', nextSmsSendAccept)
+        print(str(datetime.now())+' > SMS not send dual cold-down, until time: ', GlobalData.nextSmsSendAccept)
     return
+
+    '''
+    jsonData=str('{"type":"sms","to":"'+ sendto +'","content":"'+ smscontent +'"}')
+    serialObject.write(jsonData.encode())
+    '''
 
 # 接收到短信时的处理程序
 # 只能接受正确格式的JSON，不支持SMS780E直接输出的伪JSON
@@ -62,23 +66,23 @@ def SMSCmdProcessing(smsrawdata,serialObject):
             if msg["from"] in Config.smscmd_admin_phone : # 如果短信的发件人是管理员
                 cmds=str(msg["data"]).split(Config.smscmd_cmd_split_flag,2)
                 cmd=cmds[0]
+                print(str(datetime.now())+' > Received Administrator SMS: ', cmds)
 
-                if cmd == Config.smscmd_command_sendsms:
-                    sendto=cmds[1]
-                    content=cmds[2]
+                if cmd in Config.smscmd_command_sendsms:
+                    sendto=str(cmds[1])
+                    content=str(cmds[2])
 
                     SendSms(sendto,content,serialObject)
-                elif cmd == Config.smscmd_command_exit:
-                    raise KeyboardInterrupt
+                elif cmd in Config.smscmd_command_exit:
+                    print(str(datetime.now())+' > Executing: ', cmd)
+                    serialObject.close()
 
                 return True
             else:
                 return False
         except Exception as e:
-            if e != KeyboardInterrupt:
-                print(str(datetime.now())+" > SMS Command Exec Failed! ",e)
-            else:
-                raise KeyboardInterrupt
+            print(str(datetime.now())+" > SMS Command Exec Failed! ",e)
+
         finally:
             return False
 
@@ -106,7 +110,7 @@ def SMS780E():
                     ser_in_utf8=SMSRawDataToRealJson(ser_in.decode("utf-8"))# 数据传入以后将其转换为UTF-8格式
                     cmd_process=SMSCmdProcessing(ser_in_utf8,ser)
                     if cmd_process==False or Config.smscmd_save_cmdsms:
-                         SMSReceivedProcessing(ser_in_utf8)# 交给短信转发处理程序处理
+                        SMSReceivedProcessing(ser_in_utf8)# 交给短信转发处理程序处理
             
             sleep(0.01)# 如果没有数据传入则等待0.01秒等待数据传入
             
@@ -116,12 +120,11 @@ def SMS780E():
             return
 
 def main():
-    global nextSmsSendAccept
-    nextSmsSendAccept = datetime.now()
     Storage.InitDb() # 初始化数据库
     p_sms = Process(target=SMS780E) # 启动主进程
     p_sms.start()
     p_sms.join()
     
 if __name__ == "__main__":
+    GlobalData.nextSmsSendAccept = datetime.now()
     main()
