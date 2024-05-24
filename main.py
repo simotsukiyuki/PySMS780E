@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 from time import sleep
 import serial
@@ -23,6 +23,16 @@ def SMSRawDataToRealJson(smsrawdata):
     # 替换占位符为Json格式    
     return smsrawdata
 
+def SendSms(sendto,smscontent,serialObject):
+    global nextSmsSendAccept
+    if datetime.now()>=nextSmsSendAccept:
+        jsonData='{"type":"sms","to":"',sendto,'","content":"',smscontent,'"}'
+        serialObject.write(jsonData)
+        nextSmsSendAccept=datetime.now()+timedelta(seconds=Config.smscmd_cmd_nextsms_countdown)
+    else:
+        print(str(datetime.now())+' > SMS not send dual cold-down, until time: ', nextSmsSendAccept)
+    return
+
 # 接收到短信时的处理程序
 # 只能接受正确格式的JSON，不支持SMS780E直接输出的伪JSON
 # 输入：smsrawdata: 处理后的JSON, string
@@ -43,19 +53,34 @@ def SMSReceivedProcessing(smsrawdata):
         SendMail.SendNewMail(sender,smscontent,recvtime)# 发邮件的处理
 
 # 短信指令处理程序
-def SMSCmdProcessing(smsrawdata):
+def SMSCmdProcessing(smsrawdata,serialObject):
     if Config.smscmd_enable == False:# 如果短信指令功能未开启则跳过
-        return
-    try:
-        msg = json.loads(smsrawdata) # JSON->msg对象
-        if msg["from"] in Config.smscmd_admin_phone : # 如果短信的发件人是管理员
-            pass# To Be Continue
-        else:
-            return
-    except Exception as e:
-        print(str(datetime.now())+" > SMS Command Exec Failed! ",e)
-    finally:
-        return
+        return False
+    else:
+        try:
+            msg = json.loads(smsrawdata) # JSON->msg对象
+            if msg["from"] in Config.smscmd_admin_phone : # 如果短信的发件人是管理员
+                cmds=str(msg["data"]).split(Config.smscmd_cmd_split_flag,2)
+                cmd=cmds[0]
+
+                if cmd == Config.smscmd_command_sendsms:
+                    sendto=cmds[1]
+                    content=cmds[2]
+
+                    SendSms(sendto,content,serialObject)
+                elif cmd == Config.smscmd_command_exit:
+                    raise KeyboardInterrupt
+
+                return True
+            else:
+                return False
+        except Exception as e:
+            if e != KeyboardInterrupt:
+                print(str(datetime.now())+" > SMS Command Exec Failed! ",e)
+            else:
+                raise KeyboardInterrupt
+        finally:
+            return False
 
 # 主进程
 def SMS780E():
@@ -79,7 +104,9 @@ def SMS780E():
                 ser_in=ser.read(ser.in_waiting)# 读取指定长度的数据
                 if ser_in:
                     ser_in_utf8=SMSRawDataToRealJson(ser_in.decode("utf-8"))# 数据传入以后将其转换为UTF-8格式
-                    SMSReceivedProcessing(ser_in_utf8)# 交给短信处理程序处理
+                    cmd_process=SMSCmdProcessing(ser_in_utf8,ser)
+                    if cmd_process==False or Config.smscmd_save_cmdsms:
+                         SMSReceivedProcessing(ser_in_utf8)# 交给短信转发处理程序处理
             
             sleep(0.01)# 如果没有数据传入则等待0.01秒等待数据传入
             
@@ -89,6 +116,8 @@ def SMS780E():
             return
 
 def main():
+    global nextSmsSendAccept
+    nextSmsSendAccept = datetime.now()
     Storage.InitDb() # 初始化数据库
     p_sms = Process(target=SMS780E) # 启动主进程
     p_sms.start()
