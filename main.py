@@ -23,19 +23,16 @@ def SMSRawDataToRealJson(smsrawdata):
     # 替换占位符为Json格式    
     return smsrawdata
 
+# 发送短信
+# 输入：sendto：信息收件人号码 smscontent：信息内容 serialObject：pySerial的用户串口对象（必须！）
 def SendSms(sendto,smscontent,serialObject):
-    if datetime.now()>=GlobalData.nextSmsSendAccept:
-        jsonData=str('{"type":"sms","to":"'+ sendto +'","content":"'+ smscontent +'"}')
-        serialObject.write(jsonData.encode())
-        GlobalData.nextSmsSendAccept=datetime.now()+timedelta(seconds=Config.smscmd_cmd_nextsms_countdown)
-    else:
+    if datetime.now()>=GlobalData.nextSmsSendAccept:# 如果已经过了冷却时间
+        jsonData=str('{"type":"sms","to":"'+ sendto +'","content":"'+ smscontent +'"}')# 拼接json，具体参考https://github.com/simotsukiyuki/sms_forwarding_uart
+        serialObject.write(jsonData.encode())# 将json字符串转换为pySerial能接收的bytes并且发送到用户串口
+        GlobalData.nextSmsSendAccept=datetime.now()+timedelta(seconds=Config.smscmd_cmd_nextsms_countdown)# 刷新冷却时间
+    else:# 如果还在冷却时间则跳过
         print(str(datetime.now())+' > SMS not send dual cold-down, until time: ', GlobalData.nextSmsSendAccept)
     return
-
-    '''
-    jsonData=str('{"type":"sms","to":"'+ sendto +'","content":"'+ smscontent +'"}')
-    serialObject.write(jsonData.encode())
-    '''
 
 # 接收到短信时的处理程序
 # 只能接受正确格式的JSON，不支持SMS780E直接输出的伪JSON
@@ -64,21 +61,21 @@ def SMSCmdProcessing(smsrawdata,serialObject):
         try:
             msg = json.loads(smsrawdata) # JSON->msg对象
             if msg["from"] in Config.smscmd_admin_phone : # 如果短信的发件人是管理员
-                cmds=str(msg["data"]).split(Config.smscmd_cmd_split_flag,2)
-                cmd=cmds[0]
+                cmds=str(msg["data"]).split(Config.smscmd_cmd_split_flag,2)# 按格式将短信指令进行分割
+                cmd=cmds[0]# 短信指令
                 print(str(datetime.now())+' > Received Administrator SMS: ', cmds)
 
-                if cmd in Config.smscmd_command_sendsms:
-                    sendto=str(cmds[1])
-                    content=str(cmds[2])
+                if cmd in Config.smscmd_command_sendsms:#发短信
+                    sendto=str(cmds[1])# 收件人
+                    content=str(cmds[2])# 短信内容
 
                     SendSms(sendto,content,serialObject)
-                elif cmd in Config.smscmd_command_exit:
+                elif cmd in Config.smscmd_command_exit:#退出
                     print(str(datetime.now())+' > Executing: ', cmd)
                     serialObject.close()
 
                 return True
-            else:
+            else:# 不是管理员则忽略此短信
                 return False
         except Exception as e:
             print(str(datetime.now())+" > SMS Command Exec Failed! ",e)
@@ -126,5 +123,5 @@ def main():
     p_sms.join()
     
 if __name__ == "__main__":
-    GlobalData.nextSmsSendAccept = datetime.now()
+    GlobalData.nextSmsSendAccept = datetime.now()# 刷新CD
     main()
