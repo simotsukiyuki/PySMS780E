@@ -60,19 +60,9 @@ NOTE: 当前版本需要打开Config.py文件修改源代码，你可以根据�
 
 # 短信指令
 
-**注意*****短信指令功能尚在测试阶段，不能确保稳定性。请自行决定是否启用该功能。请勿用于生产环境，后果自负***
+短信指令目前已经并入主分支。如需使用，**请修改Config.py**。
 
-短信指令目前并未并入主分支，如需使用，请将分支切换到sms_command分支并修改Config.py。
-
-注意：Config.py有**可能被覆盖**，在进行任何操作以前，请先备份！
-
-> git clone -b sms_command https://github.com/simotsukiyuki/PySMS780E.git
->
-> cd ./PySMS780E
->
-> nano Config.py
-
-sms_command分支的Config.py与当前版本的主分支有所不同，你需要额外配置Config.py才可以正确启用短信指令功能。**请参阅配置Config.py这一节内容**
+你需要额外配置Config.py才可以正确启用短信指令功能。**请参阅配置Config.py这一节内容**
 
 ## 使用方式
 
