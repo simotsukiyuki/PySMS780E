@@ -76,6 +76,10 @@ Description=SMS780E Daemon
 
 [Service]
 Type=simple
+StartLimitIntervalSec=0
+Restart=always
+RestartSec=1
+
 ExecStart=/[你的venv名字]/bin/python3 /[你的代码路径]/main.py
 
 PrivateTmp=false
