@@ -34,6 +34,6 @@ class SendMail:
             server.send_mail(Config.smtp_mail_receiver_address,mail)
     
             print(str(datetime.now())+' > E-Mail Send Complete.')
-        except Exception as ex:
-            print(str(datetime.now())+" > E-Mail Send Failed, Info: "+ex)
+        except Exception:
+            print(str(datetime.now())+" > E-Mail Send Failed.")
         
